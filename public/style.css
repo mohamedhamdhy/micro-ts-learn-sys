@@ -71,6 +71,7 @@ body {
     width: 500px;
     max-width: 90vw;
     padding: 2rem;
+    text-align: center;
 }
 
 .boot-line {
