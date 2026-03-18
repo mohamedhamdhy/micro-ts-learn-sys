@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LEARNSYS_v1.0.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="scanlines"></div>
+    <div class="grid-bg"></div>
+
+    <div class="boot-screen" id="bootScreen">
+      <div class="boot-text" id="bootText"></div>
+    </div>
+
+    <div class="dashboard" id="dashboard" style="display: none">
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="sys-id">LEARNSYS_v1.0.0</span>
+          <span class="divider">|</span>
+          <span class="operator">OPERATOR: <strong>HAMDHY</strong></span>
+        </div>
+        <div class="topbar-center">
+          <div class="radar-dot"></div>
+          <span class="status-text" id="sysStatus">ALL SYSTEMS NOMINAL</span>
+        </div>
+        <div class="topbar-right">
+          <span class="clock" id="clock"></span>
+        </div>
+      </header>
+
+      <main class="main-grid">
+        <aside class="left-panel">
+          <div class="panel-block">
+            <div class="panel-label">// INPUT MODE</div>
+            <div class="mode-btns">
+              <button
+                class="mode-btn active"
+                data-mode="url"
+                onclick="setMode('url')"
+              >
+                🌐 URL
+              </button>
+              <button
+                class="mode-btn"
+                data-mode="file"
+                onclick="setMode('file')"
+              >
+                📄 FILE
+              </button>
+              <button
+                class="mode-btn"
+                data-mode="text"
+                onclick="setMode('text')"
+              >
+                ✏️ TEXT
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-block" id="modeUrl">
+            <div class="panel-label">// TARGET URL</div>
+            <div class="input-row">
+              <label class="input-label">URL</label>
+              <input
+                type="text"
+                id="urlInput"
+                class="sys-input"
+                placeholder="https://arxiv.org/abs/..."
+              />
+            </div>
+            <div class="input-hint">arxiv · blogs · journals · any webpage</div>
+          </div>
+
+          <div class="panel-block" id="modeFile" style="display: none">
+            <div class="panel-label">// UPLOAD FILE</div>
+            <div class="drop-zone" id="dropZone">
+              <input
+                type="file"
+                id="fileInput"
+                accept=".pdf,.docx,.txt,.md"
+                hidden
+              />
+              <div
+                class="drop-inner"
+                id="dropInner"
+                onclick="document.getElementById('fileInput').click()"
+              >
+                <div class="drop-crosshair">
+                  <span class="ch-h"></span><span class="ch-v"></span>
+                </div>
+                <div class="drop-label">DROP FILE HERE</div>
+                <div class="drop-sub">PDF · DOCX · TXT · MD</div>
+              </div>
+              <div class="file-ready" id="fileReady" style="display: none">
+                <span class="file-ready-icon">✔</span>
+                <span id="fileName"></span>
+                <button class="eject-btn" onclick="clearFile()">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-block" id="modeText" style="display: none">
+            <div class="panel-label">// PASTE TEXT / MARKDOWN</div>
+            <input
+              type="text"
+              id="textTitle"
+              class="sys-input"
+              placeholder="Document title..."
+              style="
+                border: 1px solid var(--border);
+                background: var(--cyan-glow2);
+                padding: 0.4rem 0.6rem;
+                margin-bottom: 0.3rem;
+              "
+            />
+            <textarea
+              id="textInput"
+              class="sys-textarea"
+              placeholder="Paste your text, notes, or markdown here..."
+            ></textarea>
+          </div>
+
+          <div class="action-btns">
+            <button class="fire-btn" id="processBtn">
+              <span class="fire-label">▶ PROCESS DOCUMENT</span>
+              <div class="fire-scan"></div>
+            </button>
+            <button class="stop-btn" id="abortBtn" disabled>■ ABORT</button>
+          </div>
+
+          <div class="panel-block">
+            <div class="panel-label">// SESSION STATS</div>
+            <div class="stats-grid4">
+              <div class="stat4">
+                <div class="stat4-num" id="statDocs">0</div>
+                <div class="stat4-lbl">DOCS</div>
+              </div>
+              <div class="stat4">
+                <div class="stat4-num green" id="statCards">0</div>
+                <div class="stat4-lbl">CARDS</div>
+              </div>
+              <div class="stat4">
+                <div class="stat4-num cyan" id="statWords">0</div>
+                <div class="stat4-lbl">WORDS</div>
+              </div>
+              <div class="stat4">
+                <div class="stat4-num yellow" id="statKw">0</div>
+                <div class="stat4-lbl">KEYWORDS</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-block">
+            <div class="panel-label">// LAST DOCUMENT</div>
+            <div class="meta-grid" id="docMeta">
+              <div class="meta-item">
+                <span class="meta-key">TITLE</span
+                ><span class="meta-val" id="metaTitle">—</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-key">TYPE</span
+                ><span class="meta-val" id="metaType">—</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-key">WORDS</span
+                ><span class="meta-val" id="metaWords">—</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-key">READ</span
+                ><span class="meta-val" id="metaRead">—</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-key">CITES</span
+                ><span class="meta-val" id="metaCites">—</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-key">SECTIONS</span
+                ><span class="meta-val" id="metaSections">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-block">
+            <div class="panel-label">// EXPORT</div>
+            <div class="export-grid">
+              <button class="export-btn" id="dlMarkdown" disabled>
+                ↓ REPORT.MD
+              </button>
+              <button class="export-btn" id="dlCSV" disabled>
+                ↓ CARDS.CSV
+              </button>
+              <button class="export-btn" id="dlAnki" disabled>
+                ↓ ANKI.TXT
+              </button>
+              <button class="export-btn" id="dlQuizlet" disabled>
+                ↓ QUIZLET
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <section class="right-panel">
+          <div class="tab-bar">
+            <button class="tab active" data-tab="live">FEED</button>
+            <button class="tab" data-tab="summary">SUMMARY</button>
+            <button class="tab" data-tab="flashcards">FLASHCARDS</button>
+            <button class="tab" data-tab="keywords">KEYWORDS</button>
+            <button class="tab" data-tab="report">REPORT</button>
+            <button class="tab" data-tab="library">LIBRARY</button>
+            <div class="tab-count" id="tabCardCount">0</div>
+          </div>
+
+          <div class="tab-content active" id="tab-live">
+            <div class="feed-header">
+              <span>PROCESSING FEED</span><span class="blink-dot"></span>
+            </div>
+            <div class="feed" id="liveFeed">
+              <div class="feed-idle">[ AWAITING DOCUMENT... ]</div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-summary">
+            <div class="feed-header">
+              <span>DOCUMENT SUMMARY</span
+              ><span
+                id="summaryTitle"
+                style="color: var(--cyan); font-size: 0.6rem"
+              ></span>
+            </div>
+            <div class="summary-panel" id="summaryPanel">
+              <div class="feed-idle">[ NO DOCUMENT PROCESSED YET ]</div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-flashcards">
+            <div class="feed-header">
+              <span>FLASHCARDS</span>
+              <div class="filter-btns">
+                <button
+                  class="filter-btn active"
+                  data-diff="all"
+                  onclick="filterCards('all')"
+                >
+                  ALL
+                </button>
+                <button
+                  class="filter-btn"
+                  data-diff="easy"
+                  onclick="filterCards('easy')"
+                >
+                  EASY
+                </button>
+                <button
+                  class="filter-btn"
+                  data-diff="medium"
+                  onclick="filterCards('medium')"
+                >
+                  MEDIUM
+                </button>
+                <button
+                  class="filter-btn"
+                  data-diff="hard"
+                  onclick="filterCards('hard')"
+                >
+                  HARD
+                </button>
+              </div>
+            </div>
+            <div class="feed" id="flashcardsFeed">
+              <div class="feed-idle">[ NO FLASHCARDS GENERATED ]</div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-keywords">
+            <div class="feed-header"><span>KEYWORDS & CONCEPTS</span></div>
+            <div class="feed" id="keywordsFeed">
+              <div class="feed-idle">[ NO KEYWORDS EXTRACTED ]</div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-report">
+            <div class="feed-header">
+              <span>MARKDOWN REPORT</span>
+              <button class="wipe-btn" id="copyReport" disabled>⎘ COPY</button>
+            </div>
+            <div class="readme-preview" id="reportPreview">
+              <div class="feed-idle">[ NO REPORT GENERATED ]</div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-library">
+            <div class="feed-header">
+              <span>PERSONAL LIBRARY</span>
+              <span
+                id="libraryCount"
+                style="color: var(--muted); font-size: 0.6rem"
+                >0 documents</span
+              >
+            </div>
+            <div class="feed" id="libraryFeed">
+              <div class="feed-idle">[ LIBRARY IS EMPTY ]</div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>EXTRACTORS: PDF·DOCX·TXT·URL</span>
+        <span class="divider">|</span>
+        <span>AI: OPENAI_OPTIONAL</span>
+        <span class="divider">|</span>
+        <span>EXPORT: MD·CSV·ANKI·QUIZLET</span>
+        <span class="divider">|</span>
+        <span id="footerWords">WORDS: —</span>
+      </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const bootLines = [
+        "LEARNSYS v1.0.0 INITIALIZING...",
+        "LOADING PDF EXTRACTION ENGINE... OK",
+        "LOADING DOCX PARSER... OK",
+        "LOADING URL SCRAPER... OK",
+        "LOADING TEXT PROCESSOR... OK",
+        "LOADING SUMMARIZATION ENGINE... OK",
+        "LOADING FLASHCARD GENERATOR... OK",
+        "LOADING REPORT BUILDER... OK",
+        "LOADING PERSONAL LIBRARY... OK",
+        "ESTABLISHING SOCKET CONNECTION... OK",
+        "ALL SYSTEMS NOMINAL.",
+        "WELCOME, HAMDHY. READY TO LEARN.",
+      ];
+      let bi = 0;
+      const bootEl = document.getElementById("bootText");
+      function bootStep() {
+        if (bi < bootLines.length) {
+          bootEl.innerHTML += `<div class="boot-line">> ${bootLines[bi]}</div>`;
+          bi++;
+          setTimeout(bootStep, 180);
+        } else {
+          setTimeout(() => {
+            document.getElementById("bootScreen").style.opacity = "0";
+            setTimeout(() => {
+              document.getElementById("bootScreen").style.display = "none";
+              const d = document.getElementById("dashboard");
+              d.style.display = "flex";
+              d.style.animation = "fadeIn 0.4s ease";
+              loadLibrary();
+            }, 400);
+          }, 500);
+        }
+      }
+      setTimeout(bootStep, 200);
+
+      function tick() {
+        document.getElementById("clock").textContent =
+          new Date().toLocaleTimeString("en-GB", { hour12: false }) + " UTC";
+      }
+      tick();
+      setInterval(tick, 1000);
+
+      document.querySelectorAll(".tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tab")
+            .forEach((t) => t.classList.remove("active"));
+          document
+            .querySelectorAll(".tab-content")
+            .forEach((t) => t.classList.remove("active"));
+          btn.classList.add("active");
+          document
+            .getElementById("tab-" + btn.dataset.tab)
+            .classList.add("active");
+        });
+      });
+
+      let currentMode = "url";
+      function setMode(mode) {
+        currentMode = mode;
+        document
+          .querySelectorAll(".mode-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document.querySelector(`[data-mode="${mode}"]`).classList.add("active");
+        document.getElementById("modeUrl").style.display =
+          mode === "url" ? "" : "none";
+        document.getElementById("modeFile").style.display =
+          mode === "file" ? "" : "none";
+        document.getElementById("modeText").style.display =
+          mode === "text" ? "" : "none";
+      }
+
+      const dropZone = document.getElementById("dropZone");
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("drag-over");
+      });
+      dropZone.addEventListener("dragleave", () =>
+        dropZone.classList.remove("drag-over"),
+      );
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("drag-over");
+        const f = e.dataTransfer.files[0];
+        if (f) setSelectedFile(f);
+      });
+      document.getElementById("fileInput").addEventListener("change", (e) => {
+        if (e.target.files[0]) setSelectedFile(e.target.files[0]);
+      });
+
+      let selectedFile = null;
+      function setSelectedFile(f) {
+        selectedFile = f;
+        document.getElementById("dropInner").style.display = "none";
+        document.getElementById("fileReady").style.display = "flex";
+        document.getElementById("fileName").textContent = f.name;
+      }
+      function clearFile() {
+        selectedFile = null;
+        document.getElementById("dropInner").style.display = "flex";
+        document.getElementById("fileReady").style.display = "none";
+        document.getElementById("fileInput").value = "";
+      }
+
+      let abortController = null;
+      let isRunning = false;
+      let currentReport = null;
+      let allFlashcards = [];
+
+      document
+        .getElementById("processBtn")
+        .addEventListener("click", async () => {
+          if (isRunning) return;
+
+          const processBtn = document.getElementById("processBtn");
+          const abortBtn = document.getElementById("abortBtn");
+
+          if (currentMode === "url") {
+            const url = document.getElementById("urlInput").value.trim();
+            if (!url) {
+              addLive("error", "NO URL — enter a target URL");
+              return;
+            }
+            await startProcessing(
+              "/process-url",
+              JSON.stringify({ url }),
+              "application/json",
+            );
+          } else if (currentMode === "file") {
+            if (!selectedFile) {
+              addLive("error", "NO FILE — drop or select a file");
+              return;
+            }
+            const fd = new FormData();
+            fd.append("file", selectedFile);
+            await startProcessing("/process-file", fd, null);
+          } else {
+            const text = document.getElementById("textInput").value.trim();
+            const title =
+              document.getElementById("textTitle").value.trim() ||
+              "Pasted Document";
+            if (!text) {
+              addLive("error", "NO TEXT — paste some content");
+              return;
+            }
+            await startProcessing(
+              "/process-text",
+              JSON.stringify({ text, title }),
+              "application/json",
+            );
+          }
+
+          async function startProcessing(endpoint, body, contentType) {
+            isRunning = true;
+            abortController = new AbortController();
+            processBtn.disabled = true;
+            processBtn.querySelector(".fire-label").textContent =
+              "⟳ PROCESSING...";
+            abortBtn.disabled = false;
+            document.getElementById("liveFeed").innerHTML = "";
+            activateTab("live");
+            setStatus("PROCESSING DOCUMENT...");
+
+            try {
+              const opts = {
+                method: "POST",
+                body,
+                signal: abortController.signal,
+              };
+              if (contentType) opts.headers = { "Content-Type": contentType };
+              const res = await fetch(endpoint, opts);
+              if (!res.ok) throw new Error(await res.text());
+
+              const reader = res.body.getReader();
+              const decoder = new TextDecoder();
+              while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                if (!value) continue;
+                const lines = decoder
+                  .decode(value)
+                  .split("\n")
+                  .filter((l) => l.trim());
+                for (const line of lines) {
+                  if (line === "DONE" || line === "ERROR") continue;
+                  const type = line.startsWith("❌")
+                    ? "error"
+                    : line.startsWith("✅")
+                      ? "success"
+                      : "info";
+                  addLive(type, line);
+                  setStatus(
+                    line
+                      .replace(/[✅❌]/g, "")
+                      .trim()
+                      .substring(0, 65),
+                  );
+                }
+              }
+            } catch (err) {
+              if (err.name !== "AbortError") {
+                addLive("error", `FATAL: ${err.message}`);
+                setStatus("ERROR");
+              } else {
+                addLive("error", "■ ABORTED");
+                setStatus("ABORTED");
+              }
+            } finally {
+              isRunning = false;
+              processBtn.disabled = false;
+              processBtn.querySelector(".fire-label").textContent =
+                "▶ PROCESS DOCUMENT";
+              abortBtn.disabled = true;
+            }
+          }
+        });
+
+      document.getElementById("abortBtn").addEventListener("click", () => {
+        if (abortController) abortController.abort();
+      });
+
+      const socket = io();
+      socket.on("report-ready", (report) => {
+        currentReport = report;
+        allFlashcards = report.flashcards || [];
+        renderReport(report);
+        loadLibrary();
+      });
+
+      const devSocket = io("http://localhost:3001");
+      devSocket.on("reload", () => location.reload());
+
+      function renderReport(r) {
+        document.getElementById("metaTitle").textContent = r.title.substring(
+          0,
+          30,
+        );
+        document.getElementById("metaType").textContent =
+          r.sourceType.toUpperCase();
+        document.getElementById("metaWords").textContent =
+          r.wordCount.toLocaleString();
+        document.getElementById("metaRead").textContent =
+          r.readabilityScore + "/100";
+        document.getElementById("metaCites").textContent =
+          r.citations?.length || 0;
+        document.getElementById("metaSections").textContent =
+          r.sections?.length || 0;
+
+        const prevDocs =
+          parseInt(document.getElementById("statDocs").textContent) || 0;
+        const prevWords =
+          parseInt(
+            document.getElementById("statWords").textContent.replace(/,/g, ""),
+          ) || 0;
+        document.getElementById("statDocs").textContent = prevDocs + 1;
+        document.getElementById("statCards").textContent = allFlashcards.length;
+        document.getElementById("statWords").textContent = (
+          prevWords + r.wordCount
+        ).toLocaleString();
+        document.getElementById("statKw").textContent = r.keywords?.length || 0;
+        document.getElementById("footerWords").textContent =
+          `WORDS: ${r.wordCount.toLocaleString()}`;
+
+        document.getElementById("tabCardCount").textContent =
+          allFlashcards.length;
+
+        renderSummary(r);
+
+        renderFlashcards(allFlashcards);
+
+        renderKeywords(r.keywords || []);
+
+        if (r.markdownReport) {
+          document.getElementById("reportPreview").innerHTML =
+            `<pre class="readme-raw">${escHtml(r.markdownReport)}</pre>`;
+          document.getElementById("copyReport").disabled = false;
+        }
+
+        document.getElementById("dlMarkdown").disabled = false;
+        document.getElementById("dlCSV").disabled = false;
+        document.getElementById("dlAnki").disabled = false;
+        document.getElementById("dlQuizlet").disabled = false;
+
+        activateTab("summary");
+        document.getElementById("summaryTitle").textContent = r.title;
+        setStatus(
+          `COMPLETE — ${allFlashcards.length} cards · ${r.keywords?.length || 0} keywords`,
+        );
+        addLive("success", `✅ REPORT READY — "${r.title}"`);
+      }
+
+      function renderSummary(r) {
+        const panel = document.getElementById("summaryPanel");
+        panel.innerHTML = `
+      <div class="summary-section">
+        <div class="summary-label">SUMMARY</div>
+        <div class="summary-text">${escHtml(r.summary)}</div>
+      </div>
+
+      <div class="summary-section">
+        <div class="summary-label">KEY POINTS (${r.keyPoints?.length || 0})</div>
+        <ul class="kp-list">
+          ${(r.keyPoints || []).map((kp) => `<li>${escHtml(kp)}</li>`).join("")}
+        </ul>
+      </div>
+
+      <div class="summary-section">
+        <div class="summary-label">ACTIONABLE INSIGHTS</div>
+        <ul class="insight-list">
+          ${(r.actionableInsights || []).map((ai) => `<li>✅ ${escHtml(ai)}</li>`).join("")}
+        </ul>
+      </div>
+
+      ${
+        r.sections?.length > 0
+          ? `
+      <div class="summary-section">
+        <div class="summary-label">SECTIONS (${r.sections.length})</div>
+        ${r.sections
+          .slice(0, 6)
+          .map(
+            (s) => `
+          <div class="section-item">
+            <div class="section-title">${escHtml(s.title)}</div>
+            <div class="section-words">${s.wordCount} words</div>
+            ${s.summary ? `<div class="section-summary">${escHtml(s.summary)}</div>` : ""}
+          </div>`,
+          )
+          .join("")}
+      </div>`
+          : ""
+      }
+
+      ${
+        r.citations?.length > 0
+          ? `
+      <div class="summary-section">
+        <div class="summary-label">CITATIONS (${r.citations.length})</div>
+        <ul class="cite-list">
+          ${r.citations
+            .slice(0, 10)
+            .map(
+              (c) =>
+                `<li>${escHtml(c.authors)}${c.year ? ` (${c.year})` : ""}${c.title ? ` — ${escHtml(c.title.substring(0, 60))}` : ""}</li>`,
+            )
+            .join("")}
+        </ul>
+      </div>`
+          : ""
+      }
+    `;
+      }
+
+      function renderFlashcards(cards) {
+        const feed = document.getElementById("flashcardsFeed");
+        const filter =
+          document.querySelector(".filter-btn.active")?.dataset.diff || "all";
+        const filtered =
+          filter === "all"
+            ? cards
+            : cards.filter((c) => c.difficulty === filter);
+
+        if (filtered.length === 0) {
+          feed.innerHTML = `<div class="feed-idle">[ NO ${filter.toUpperCase()} CARDS ]</div>`;
+          return;
+        }
+
+        feed.innerHTML = filtered
+          .map(
+            (fc, i) => `
+      <div class="flashcard" onclick="this.classList.toggle('flipped')">
+        <div class="fc-header">
+          <span class="fc-num">CARD ${i + 1}/${filtered.length}</span>
+          <span class="fc-diff diff-${fc.difficulty}">${fc.difficulty.toUpperCase()}</span>
+          <span class="fc-tags">${(fc.tags || []).join(" · ")}</span>
+        </div>
+        <div class="fc-body">
+          <div class="fc-question">
+            <div class="fc-label">Q</div>
+            <div class="fc-text">${escHtml(fc.question)}</div>
+          </div>
+          <div class="fc-divider">── TAP TO REVEAL ──</div>
+          <div class="fc-answer">
+            <div class="fc-label">A</div>
+            <div class="fc-text answer-text">${escHtml(fc.answer)}</div>
+          </div>
+        </div>
+      </div>
+    `,
+          )
+          .join("");
+      }
+
+      function filterCards(diff) {
+        document
+          .querySelectorAll(".filter-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document.querySelector(`[data-diff="${diff}"]`).classList.add("active");
+        renderFlashcards(allFlashcards);
+      }
+
+      function renderKeywords(keywords) {
+        const feed = document.getElementById("keywordsFeed");
+        if (!keywords.length) {
+          feed.innerHTML = `<div class="feed-idle">[ NO KEYWORDS ]</div>`;
+          return;
+        }
+
+        feed.innerHTML = `
+      <div class="kw-cloud">
+        ${keywords
+          .slice(0, 20)
+          .map(
+            (kw) => `
+          <div class="kw-pill" style="font-size:${0.6 + (kw.importance / 100) * 0.5}rem;opacity:${0.5 + kw.importance / 200}"
+               title="${escHtml(kw.context)}">${escHtml(kw.term)} <span class="kw-count">${kw.frequency}</span></div>
+        `,
+          )
+          .join("")}
+      </div>
+      <div style="padding:0.5rem 0.75rem;border-top:1px solid var(--border);">
+        <table class="kw-table">
+          <thead><tr><th>TERM</th><th>FREQ</th><th>IMPORTANCE</th><th>CONTEXT</th></tr></thead>
+          <tbody>
+            ${keywords
+              .map(
+                (kw) => `
+              <tr>
+                <td class="kw-term">${escHtml(kw.term)}</td>
+                <td class="kw-freq">${kw.frequency}</td>
+                <td>
+                  <div class="kw-bar-wrap">
+                    <div class="kw-bar" style="width:${kw.importance}%"></div>
+                  </div>
+                  <span class="kw-pct">${kw.importance}%</span>
+                </td>
+                <td class="kw-ctx">${escHtml((kw.context || "").substring(0, 60))}${kw.context?.length > 60 ? "..." : ""}</td>
+              </tr>`,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>`;
+      }
+
+      async function loadLibrary() {
+        try {
+          const res = await fetch("/library");
+          const entries = await res.json();
+          document.getElementById("libraryCount").textContent =
+            `${entries.length} documents`;
+          const feed = document.getElementById("libraryFeed");
+
+          if (entries.length === 0) {
+            feed.innerHTML = `<div class="feed-idle">[ LIBRARY IS EMPTY ]</div>`;
+            return;
+          }
+
+          const gradeColors = {
+            A: "green",
+            B: "cyan",
+            C: "yellow",
+            D: "orange",
+            F: "red",
+          };
+          feed.innerHTML = entries
+            .map(
+              (e) => `
+        <div class="lib-row">
+          <div class="file-grade grade-${gradeColors[e.grade] || "cyan"}">${e.grade}</div>
+          <div class="file-info" style="cursor:pointer" onclick="loadReport('${e.reportId}')">
+            <div class="file-path">${escHtml(e.title)}</div>
+            <div class="file-meta">${e.sourceType.toUpperCase()} · ${e.wordCount?.toLocaleString()} words · ${e.flashcardCount} cards · ${e.processedAt ? new Date(e.processedAt).toLocaleDateString() : ""}</div>
+            <div class="lib-tags">${(e.keywords || [])
+              .slice(0, 5)
+              .map((k) => `<span class="lib-tag">${escHtml(k)}</span>`)
+              .join("")}</div>
+          </div>
+          <button class="eject-btn" onclick="deleteEntry('${e.id}',event)" title="Delete">✕</button>
+        </div>`,
+            )
+            .join("");
+        } catch (_) {}
+      }
+
+      async function loadReport(id) {
+        try {
+          const res = await fetch(`/report/${id}`);
+          if (!res.ok) return;
+          const report = await res.json();
+          currentReport = report;
+          allFlashcards = report.flashcards || [];
+          renderReport(report);
+        } catch (_) {}
+      }
+
+      async function deleteEntry(id, e) {
+        e.stopPropagation();
+        if (!confirm("DELETE THIS ENTRY?")) return;
+        await fetch(`/library/${id}`, { method: "DELETE" });
+        loadLibrary();
+      }
+
+      document.getElementById("copyReport").addEventListener("click", () => {
+        if (!currentReport?.markdownReport) return;
+        navigator.clipboard.writeText(currentReport.markdownReport).then(() => {
+          const btn = document.getElementById("copyReport");
+          btn.textContent = "✔ COPIED";
+          setTimeout(() => {
+            btn.textContent = "⎘ COPY";
+          }, 2000);
+        });
+      });
+
+      async function dlFile(content, filename, mime) {
+        const res = await fetch("/download", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content, filename, mime }),
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      document.getElementById("dlMarkdown").addEventListener("click", () => {
+        if (currentReport?.markdownReport)
+          dlFile(
+            currentReport.markdownReport,
+            `${currentReport.title}-report.md`,
+            "text/markdown",
+          );
+      });
+      document.getElementById("dlCSV").addEventListener("click", () => {
+        if (currentReport?.csvFlashcards)
+          dlFile(
+            currentReport.csvFlashcards,
+            `${currentReport.title}-flashcards.csv`,
+            "text/csv",
+          );
+      });
+      document.getElementById("dlAnki").addEventListener("click", () => {
+        if (currentReport?.ankiExport)
+          dlFile(
+            currentReport.ankiExport,
+            `${currentReport.title}-anki.txt`,
+            "text/plain",
+          );
+      });
+      document
+        .getElementById("dlQuizlet")
+        .addEventListener("click", async () => {
+          if (!currentReport) return;
+          const content = currentReport.flashcards
+            .map((fc) => `${fc.question}|${fc.answer}`)
+            .join("\n");
+          dlFile(content, `${currentReport.title}-quizlet.txt`, "text/plain");
+        });
+
+      function addLive(type, msg) {
+        const feed = document.getElementById("liveFeed");
+        const idle = feed.querySelector(".feed-idle");
+        if (idle) idle.remove();
+        const line = document.createElement("div");
+        line.className = `feed-line feed-${type}`;
+        line.innerHTML = `<span class="feed-ts">${nowStr()}</span><span class="feed-msg">${escHtml(msg)}</span>`;
+        feed.appendChild(line);
+        feed.scrollTop = feed.scrollHeight;
+        while (feed.children.length > 200) feed.removeChild(feed.firstChild);
+      }
+
+      function activateTab(name) {
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((t) => t.classList.remove("active"));
+        document.querySelector(`[data-tab="${name}"]`)?.classList.add("active");
+        document.getElementById(`tab-${name}`)?.classList.add("active");
+      }
+
+      function setStatus(msg) {
+        document.getElementById("sysStatus").textContent = msg.substring(0, 70);
+      }
+      function nowStr() {
+        return new Date().toLocaleTimeString("en-GB", { hour12: false });
+      }
+      function escHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+    </script>
+  </body>
+</html>
