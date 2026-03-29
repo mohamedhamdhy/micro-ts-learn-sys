@@ -1,4 +1,4 @@
-# micro-ts-research
+# System Research Bot
 
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-4.x-blue.svg)](https://expressjs.com/)
